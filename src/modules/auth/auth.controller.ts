@@ -12,6 +12,7 @@ import { LoginRequestDto } from './dto/auth-request.dto';
 import { LoginResponseDto } from './dto/auth-response.dto';
 import { RefreshAccessTokenDto } from './dto/token.dto';
 import { AuthService } from './services/auth.service';
+import { CreateUserDto } from '../users/dto/user-create.dto';
 
 @ApiTags('Authentications')
 @Controller('auth')
@@ -28,7 +29,7 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'User created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid register fields' })
   @ApiResponse({ status: 409, description: 'User already exists' })
-  async register(@Body() createUserRequestDto: RegisterUserRequestDto) {
+  async register(@Body() createUserRequestDto: CreateUserDto) {
     const { email, password } = createUserRequestDto;
     const existUser = await this.usersService.findUserByEmail(email);
 

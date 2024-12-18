@@ -1,4 +1,16 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Req } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  SetMetadata,
+  UseGuards
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { plainToClass } from 'class-transformer';
@@ -13,6 +25,12 @@ import { RegisterUserRequestDto } from './dto/user-request.dto';
 import { UsersService } from './users.service';
 import { UserRoleDto } from './dto/user-role.dto';
 import { RoleEnum } from '../roles/enum/role.enum';
+import { Roles } from '../roles/role.decorator';
+import { Permission } from '../permissions/entities/permission.entity';
+import { PermissionEnum } from '../permissions/permisison.enum';
+import { PermissionsGuard } from '../permissions/guard/permission.guard';
+import { CreateUserDto } from './dto/user-create.dto';
+import { JwtGuard } from '../auth/guards/jwt.guard';
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
@@ -44,7 +62,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({ status: 201, description: 'User created successfully', type: User })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async createNewUser(@Body() createUserRequestDto: RegisterUserRequestDto): Promise<User> {
+  async createNewUser(@Body() createUserRequestDto: CreateUserDto): Promise<User> {
     return this.usersService.createNewUser(createUserRequestDto);
   }
 
@@ -73,6 +91,7 @@ export class UsersController {
     return this.usersService.getAllRolesUser(userId);
   }
 
+  // @Roles(RoleEnum.ADMIN)
   @Post(':userId/roles')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Assign a role to the user by user ID' })
@@ -105,5 +124,19 @@ export class UsersController {
   })
   async removeRole(@Param('userId') userId: string, @Body() body: { roleId: string }): Promise<any> {
     return this.usersService.removeRoleFromUser(userId, Number(body.roleId));
+  }
+
+  // test area -----------------------------------------------------------------------------------------------------
+  @Get('test')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  // @SetMetadata('permission', PermissionEnum.READ)
+  // @UseGuards(PermissionsGuard)
+  async test(@Req() { user }: RequestWithUser): Promise<any> {
+    try {
+      return user;
+    } catch (error) {
+      throw new BadRequestException('role_id_required');
+    }
   }
 }

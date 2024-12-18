@@ -9,6 +9,7 @@ import { User } from './entities/user.entity';
 import { UserRole } from '../roles/entities/user-role.entity';
 import { RoleEnum } from '../roles/enum/role.enum';
 import { Role } from '../roles/entities/role.entity';
+import { CreateUserDto } from './dto/user-create.dto';
 
 @Injectable()
 export class UsersService {
@@ -25,10 +26,10 @@ export class UsersService {
    * @returns Người dùng mới được tạo
    */
   //! cần update lại để không phụ thuộc các service với nhau
-  async createNewUser(createUserRequestDto: RegisterUserRequestDto): Promise<User> {
+  async createNewUser(createUserRequestDto: CreateUserDto): Promise<User> {
     const { ...userDto } = createUserRequestDto;
 
-    const newUser = this.usersRepository.create({ ...userDto });
+    const newUser = this.usersRepository.create({ ...userDto, fullName: userDto.full_name || 'Anonymous' });
 
     return this.usersRepository.save(newUser);
   }

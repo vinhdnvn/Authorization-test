@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_FILTER, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { ExceptionsFilter } from '@/common/filters/exception.filter';
@@ -13,6 +13,7 @@ import { JwtGuard } from './modules/auth/guards/jwt.guard';
 import { UsersModule } from './modules/users/users.module';
 import { PermissionsModule } from './modules/permissions/permission.module';
 import { RolesModule } from './modules/roles/role.module';
+import { RolesGuard } from './modules/roles/guard/role.guard';
 
 @Module({
   imports: [
@@ -37,7 +38,13 @@ import { RolesModule } from './modules/roles/role.module';
       provide: APP_FILTER,
       useClass: ExceptionsFilter
     },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard
+    },
+
     JwtGuard,
+
     ApiResponseInterceptor
   ]
 })
