@@ -1,12 +1,10 @@
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
-import { Column, Entity, OneToMany, Unique } from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany, OneToMany, Unique } from 'typeorm';
+import { Role } from '@/modules/roles/entities/role.entity';
+import { AbstractEntityWithUUID } from '../../../common/abstracts/entity.abstract';
 
 import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
-
-import { AbstractEntityWithUUID } from '../../../common/abstracts/entity.abstract';
-import { UserRole } from '@/modules/roles/entities/user-role.entity';
-import { UserPermissionsOverride } from '@/modules/permissions/entities/user-permission-override.entity';
 
 @Entity({ name: 'users' })
 @Unique(['email'])
@@ -37,9 +35,7 @@ export class User extends AbstractEntityWithUUID {
   address: string;
 
   @ApiProperty({ description: 'Avatar of user', example: 'https://example.com/avatar.jpg' })
-  @Column({
-    nullable: true
-  })
+  @Column({ nullable: true })
   avatar: string;
 
   @ApiProperty({ description: 'Status of user', example: 1 })
@@ -47,14 +43,23 @@ export class User extends AbstractEntityWithUUID {
   status: number;
 
   @ApiHideProperty()
+  @ManyToMany(() => Role, (role) => role.users)
+  @JoinTable({
+    name: 'user_roles',
+    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' }
+  })
+  roles: Role[];
+
+
+  @ApiHideProperty()
+  // connect with permisison entity
+  // @ManyToMany(() => Permission, (permission) => permission.roles)
+  
+
+  
+
+  @ApiHideProperty()
   @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
   refreshTokens!: RefreshToken[];
-
-  @ApiHideProperty()
-  @OneToMany(() => UserRole, (userRole) => userRole.user)
-  roles: UserRole[];
-
-  @ApiHideProperty()
-  @OneToMany(() => UserPermissionsOverride, (override) => override.user)
-  overrides: UserPermissionsOverride[];
 }

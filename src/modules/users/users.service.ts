@@ -6,16 +6,17 @@ import { TLanguage } from '@/common/types/index.e';
 
 import { RegisterUserRequestDto } from './dto/user-request.dto';
 import { User } from './entities/user.entity';
-import { UserRole } from '../roles/entities/user-role.entity';
+// import { UserRole } from '../roles/entities/user-role.entity';
 import { RoleEnum } from '../roles/enum/role.enum';
 import { Role } from '../roles/entities/role.entity';
 import { CreateUserDto } from './dto/user-create.dto';
+import { UserRoleDto } from './dto/user-role.dto';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
-    @InjectRepository(UserRole) private readonly userRoleRepository: Repository<UserRole>,
+    @InjectRepository(UserRoleDto) private readonly userRoleRepository: Repository<UserRoleDto>,
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>
   ) {}
 
@@ -29,7 +30,12 @@ export class UsersService {
   async createNewUser(createUserRequestDto: CreateUserDto): Promise<User> {
     const { ...userDto } = createUserRequestDto;
 
-    const newUser = this.usersRepository.create({ ...userDto, fullName: userDto.full_name || 'Anonymous' });
+    const newUser = this.usersRepository.create({
+      ...userDto,
+      fullName: userDto.full_name || 'Anonymous',
+      // gắn role mặc định cho user
+      roles: [Object.assign(new Role(), { id: RoleEnum.USER })]
+    });
 
     return this.usersRepository.save(newUser);
   }
@@ -50,14 +56,20 @@ export class UsersService {
    * @returns Người dùng tìm thấy
    */
   async findUserById(id: string, relations: string[] = []): Promise<User> {
-    if (!id || id.trim() === '') {
-      throw new BadRequestException('invalid_id');
+    // Kiểm tra id có hợp lệ hay không
+    if (!id || typeof id !== 'string' || id.trim().length === 0) {
+      throw new BadRequestException('Invalid user ID');
     }
 
-    const user = await this.usersRepository.findOne({ where: { id }, relations });
+    // Tìm kiếm user với các quan hệ chỉ định
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      relations
+    });
 
+    // Nếu không tìm thấy user, ném ngoại lệ
     if (!user) {
-      throw new NotFoundException('user_not_found');
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
 
     return user;
@@ -110,88 +122,80 @@ export class UsersService {
 
   // watch user role
   async getAllRolesUser(userId: string): Promise<any> {
-    const user = await this.usersRepository.findOne({
-      where: { id: userId },
-      relations: ['roles', 'roles.role'] // Include the role entity
-    });
-
-    if (!user) {
-      throw new NotFoundException('user_not_found');
-    }
-
-    return {
-      ...user,
-      roles: user.roles.map((userRole) => ({
-        id: userRole.role.id,
-        name: userRole.role.name,
-        createdAt: userRole.createdAt,
-        updatedAt: userRole.updatedAt
-      }))
-    };
+    const user = await this.findUserById(userId, ['roles']);
+    return user.roles;
   }
 
   // assign new role to user by user id
   // Assign new role to user by user ID
-  async assignRoleToUser(userId: string, roleId: number): Promise<any> {
-    // Find the user by ID
-    const user = await this.findUserById(userId);
-    if (!user) {
-      throw new NotFoundException('user_not_found');
-    }
-
-    // Find the role entity by ID
-    const roleEntity = await this.roleRepository.findOne({ where: { id: roleId } });
-    if (!roleEntity) {
-      throw new BadRequestException('role_not_found');
-    }
-
-    // Check if the user already has this role
-    const existingUserRole = await this.userRoleRepository.findOne({
-      where: { user: { id: userId }, role: { id: roleEntity.id } }
+  async assignRoleToUser(userId: string, roleId: number) {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['roles'] // Tải roles liên quan
     });
-    if (existingUserRole) {
-      throw new BadRequestException('user_already_has_this_role');
+
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
 
-    // Create and save the new role for the user
-    try {
-      const userRole = this.userRoleRepository.create({
-        user,
-        role: roleEntity
-      });
-      return await this.userRoleRepository.save(userRole);
-    } catch (error) {
-      throw new BadRequestException('assign_role_failed');
+    const role = await this.roleRepository.findOne({ where: { id: roleId } });
+
+    if (!role) {
+      throw new NotFoundException('Role not found');
     }
+
+    // Kiểm tra nếu user đã có role này chưa
+    if (user.roles.some((userRole) => userRole.id === role.id)) {
+      throw new NotFoundException('User already has this role');
+    }
+
+    // Gán role cho user
+    user.roles.push(role);
+
+    // Lưu lại vào database
+    await this.usersRepository.save(user);
+
+    return { message: 'Role assigned successfully to the user' };
   }
 
   // remove role from user by user id and roleId
   async removeRoleFromUser(userId: string, roleId: number): Promise<any> {
     // Find the user by ID
-    const user = await this.findUserById(userId);
-    if (!user) {
-      throw new NotFoundException('user_not_found');
-    }
-
-    // Find the role entity by ID
-    const roleEntity = await this.roleRepository.findOne({ where: { id: roleId } });
-    if (!roleEntity) {
-      throw new BadRequestException('role_not_found');
-    }
-
-    // Check if the user has this role
-    const existingUserRole = await this.userRoleRepository.findOne({
-      where: { user: { id: userId }, role: { id: roleEntity.id } }
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['roles']
     });
-    if (!existingUserRole) {
-      throw new BadRequestException('user_does_not_have_this_role');
+
+    // If the user is not found, throw an error
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Find the role by ID
+    const role = await this.roleRepository.findOne({ where: { id: roleId } });
+
+    // If the role is not found, throw an error
+    if (!role) {
+      throw new NotFoundException('Role not found');
     }
 
     // Remove the role from the user
-    try {
-      return await this.userRoleRepository.remove(existingUserRole);
-    } catch (error) {
-      throw new BadRequestException('remove_role_failed');
+    user.roles = user.roles.filter((userRole) => userRole.id !== role.id);
+
+    // Save the changes to the database
+    await this.usersRepository.save(user);
+    return { message: 'Role removed successfully from the user' };
+  }
+
+  async getPermissionsByUserId(userId: string): Promise<any> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['roles', 'roles.permissions']
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
+
+    return user.roles.map((role) => role.permissions).flat();
   }
 }

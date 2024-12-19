@@ -1,6 +1,6 @@
-import { RolePermission } from '@/modules/role-permission/role-permission.entity';
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { UserRole } from './user-role.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable } from 'typeorm';
+import { User } from '@/modules/users/entities/user.entity';
+import { Permission } from '@/modules/permissions/entities/permission.entity';
 
 @Entity('roles')
 export class Role {
@@ -19,9 +19,15 @@ export class Role {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 
-  @OneToMany(() => RolePermission, (rolePermission) => rolePermission.role)
-  permissions: RolePermission[];
+  @ManyToMany(() => User, (user) => user.roles)
+  users: User[];
 
-  @OneToMany(() => UserRole, (userRole) => userRole.role)
-  users: UserRole[];
+  @ManyToMany(() => Permission, (permission) => permission.roles)
+  @JoinTable({
+    name: 'role_permissions',
+    joinColumn: { name: 'role_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'permission_id', referencedColumnName: 'id' }
+  })
+  permissions: Permission[];
+  role: any;
 }

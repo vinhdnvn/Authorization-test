@@ -31,8 +31,12 @@ import { PermissionEnum } from '../permissions/permisison.enum';
 import { PermissionsGuard } from '../permissions/guard/permission.guard';
 import { CreateUserDto } from './dto/user-create.dto';
 import { JwtGuard } from '../auth/guards/jwt.guard';
+import { Permissions } from '../permissions/permission.decorator';
+import { Role } from '../roles/entities/role.entity';
+import { RolesGuard } from '../roles/guard/role.guard';
 @ApiTags('Users')
 @Controller('users')
+// @UseGuards(RolesGuard)
 export class UsersController {
   constructor(
     private readonly configService: ConfigService,
@@ -40,6 +44,7 @@ export class UsersController {
   ) {}
 
   @Get('profile')
+  @UseGuards(JwtGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get the logged in user's details" })
   @ApiResponse({ status: 200, description: "Returns the logged in user's details", type: User })
@@ -87,7 +92,7 @@ export class UsersController {
   })
   @ApiResponse({ status: 200, description: 'Return all roles associated with the user', type: [User] })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async getRoles(@Param('userId') userId: string): Promise<UserRoleDto> {
+  async getRoles(@Param('userId') userId: string): Promise<any> {
     return this.usersService.getAllRolesUser(userId);
   }
 
@@ -110,7 +115,8 @@ export class UsersController {
       throw new BadRequestException('role_id_required');
     }
 
-    return this.usersService.assignRoleToUser(userId, Number(body.roleId));
+    await this.usersService.assignRoleToUser(userId, Number(body.roleId));
+    return { message: 'Role successfully assigned to the user' };
   }
 
   @Delete(':userId/roles')
@@ -127,16 +133,36 @@ export class UsersController {
   }
 
   // test area -----------------------------------------------------------------------------------------------------
-  @Get('test')
-  @UseGuards(JwtGuard)
+  // find user by id
+  @Post('/:id')
+  @Roles(RoleEnum.USER)
+  @UseGuards(JwtGuard, RolesGuard)
   @ApiBearerAuth()
-  // @SetMetadata('permission', PermissionEnum.READ)
-  // @UseGuards(PermissionsGuard)
-  async test(@Req() { user }: RequestWithUser): Promise<any> {
-    try {
-      return user;
-    } catch (error) {
-      throw new BadRequestException('role_id_required');
-    }
+  @Permissions(PermissionEnum.READ)
+  async findUserById(@Param('id') id: string): Promise<User> {
+    return this.usersService.findUserById(id, [
+      'roles'
+      // 'roles.role',
+      // 'roles.role.permissions.permission',
+      // 'overrides'
+    ]);
+  }
+
+  @Get('/:id')
+  @Roles(RoleEnum.ADMIN)
+  @UseGuards(JwtGuard, RolesGuard)
+  @ApiBearerAuth()
+  @Permissions(PermissionEnum.READ)
+  async getUserById(@Param('id') id: string): Promise<User> {
+    return this.usersService.findUserById(id, ['roles']);
+  }
+
+  @Get('/permissison')
+  // @Roles(RoleEnum.USER)
+  // @Permissions(PermissionEnum.READ)
+  // @UseGuards(JwtGuard, RolesGuard, PermissionsGuard)
+  @ApiBearerAuth()
+  async getPermission(@Req() req: RequestWithUser): Promise<Permission> {
+    return this.usersService.getPermissionsByUserId(req.user.id);
   }
 }

@@ -57,4 +57,28 @@ export class PermissionController {
   async deletePermission(@Param('id') id: string): Promise<any> {
     return this.permissionService.deletePermission(id);
   }
+
+  // assign permission to role
+  @Post('/:roleId')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Assign a permission to role by roleId' })
+  @ApiParam({
+    name: 'roleId',
+    description: 'The unique identifier of the role to which you want to assign a permission',
+    required: true,
+    type: String
+  })
+  @ApiResponse({ status: 200, description: 'Permission successfully assigned to the role' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 404, description: 'User or role not found' })
+  async assignPermissionToRole(@Param('roleId') roleId: number, @Body('permissionId') permissionId: number) {
+    await this.permissionService.assignPermissionToRole(roleId, permissionId);
+    return { message: 'Permission assigned successfully to role' };
+  }
+
+  // watch permission role by Userid body
+  @Get('/user')
+  async watchPermissionRole(@Body() body: { userId: string }) {
+    return this.permissionService.getPermissionsByUserId(body.userId);
+  }
 }

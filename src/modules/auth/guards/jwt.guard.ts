@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { AuthGuard, IAuthGuard } from '@nestjs/passport';
 
 @Injectable()
-export class JwtGuard extends AuthGuard('jwt') implements IAuthGuard {
+export class JwtGuard extends AuthGuard('jwt') {
   constructor(private reflector: Reflector) {
     super();
   }
@@ -12,6 +12,8 @@ export class JwtGuard extends AuthGuard('jwt') implements IAuthGuard {
     if (err) {
       throw err;
     }
+
+    // console.log('user in JwtGuard', user);
 
     return user;
   }

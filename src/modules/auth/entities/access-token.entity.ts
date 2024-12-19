@@ -1,7 +1,5 @@
 import { Column, Entity, JoinColumn, ManyToOne, Unique } from 'typeorm';
-
 import { AbstractEntityWithUUID } from '@/common/abstracts/entity.abstract';
-
 import { RefreshToken } from './refresh-token.entity';
 
 @Entity('access_tokens')
@@ -13,9 +11,7 @@ export class AccessToken extends AbstractEntityWithUUID {
   @Column({ default: false })
   revoked!: boolean;
 
-  @ManyToOne(() => RefreshToken, (refreshToken) => refreshToken.accessTokens, {
-    onDelete: 'CASCADE'
-  })
+  @ManyToOne(() => RefreshToken, (refreshToken) => refreshToken.accessTokens, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'refresh_token_id' })
   refreshToken!: RefreshToken;
 

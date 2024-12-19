@@ -38,10 +38,10 @@ import { RolesGuard } from './modules/roles/guard/role.guard';
       provide: APP_FILTER,
       useClass: ExceptionsFilter
     },
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: RolesGuard
+    // },
 
     JwtGuard,
 
