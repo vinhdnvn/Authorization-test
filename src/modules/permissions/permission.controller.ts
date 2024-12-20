@@ -1,9 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PermissionService } from './permission.service';
 import { create } from 'domain';
 import { Permission } from './entities/permission.entity';
 import { CreatePermissionDto } from './dto/permission-create.dto';
+import { Permissions } from './permission.decorator';
+import { PermissionEnum } from './permisison.enum';
+import { RolesGuard } from '../roles/guard/role.guard';
+import { JwtGuard } from '../auth/guards/jwt.guard';
+import { Roles } from '../roles/role.decorator';
+import { RoleEnum } from '../roles/enum/role.enum';
 
 @ApiTags('Permissions')
 @Controller('permissions')
@@ -78,6 +84,9 @@ export class PermissionController {
 
   // watch permission role by Userid body
   @Get('/user')
+  @Permissions(PermissionEnum.READ)
+  @Roles(RoleEnum.USER)
+  @UseGuards(JwtGuard, RolesGuard)
   async watchPermissionRole(@Body() body: { userId: string }) {
     return this.permissionService.getPermissionsByUserId(body.userId);
   }

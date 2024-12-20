@@ -17,7 +17,7 @@ import { PermissionService } from '../permissions/permission.service';
 @Module({
   imports: [TypeOrmModule.forFeature([Role, Permission, User, UserRoleDto]), forwardRef(() => AuthModule)],
   controllers: [RoleController],
-  providers: [ConfigService, RoleService, PermissionsGuard, UsersService],
+  providers: [ConfigService, RoleService, PermissionsGuard, UsersService, PermissionService],
   exports: [RoleService]
 })
 export class RolesModule {}

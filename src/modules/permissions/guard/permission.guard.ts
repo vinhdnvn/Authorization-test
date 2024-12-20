@@ -10,7 +10,7 @@ import { PermissionService } from '../permission.service';
 export class PermissionsGuard implements CanActivate {
   constructor(
     private reflector: Reflector
-
+  
     // private readonly permissionService: PermissionService,
   ) {}
 

@@ -136,6 +136,7 @@ export class UsersController {
   // find user by id
   @Post('/:id')
   @Roles(RoleEnum.USER)
+  @Permissions(PermissionEnum.READ)
   @UseGuards(JwtGuard, RolesGuard)
   @ApiBearerAuth()
   @Permissions(PermissionEnum.READ)
@@ -157,12 +158,9 @@ export class UsersController {
     return this.usersService.findUserById(id, ['roles']);
   }
 
-  @Get('/permissison')
-  // @Roles(RoleEnum.USER)
-  // @Permissions(PermissionEnum.READ)
-  // @UseGuards(JwtGuard, RolesGuard, PermissionsGuard)
-  @ApiBearerAuth()
-  async getPermission(@Req() req: RequestWithUser): Promise<Permission> {
-    return this.usersService.getPermissionsByUserId(req.user.id);
+  @Get('/permission')
+  @Permissions(PermissionEnum.READ)
+  async getPermission(@Body() body: { userId: string }) {
+    return this.usersService.getPermissionsByUserId(body.userId);
   }
 }

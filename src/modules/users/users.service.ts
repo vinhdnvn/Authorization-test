@@ -16,7 +16,6 @@ import { UserRoleDto } from './dto/user-role.dto';
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
-    @InjectRepository(UserRoleDto) private readonly userRoleRepository: Repository<UserRoleDto>,
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>
   ) {}
 
@@ -193,9 +192,8 @@ export class UsersService {
       relations: ['roles', 'roles.permissions']
     });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new BadRequestException('User not found');
     }
-
     return user.roles.map((role) => role.permissions).flat();
   }
 }

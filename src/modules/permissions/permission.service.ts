@@ -90,14 +90,21 @@ export class PermissionService {
     return { roleId, permissionId, message: 'Permission assigned successfully' };
   }
 
-  async getPermissionsByUserId(userId: string): Promise<any> {
+  async getPermissionsByUserId(userId: string): Promise<{ id: number; name: string }[]> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
       relations: ['roles', 'roles.permissions']
     });
+
     if (!user) {
       throw new BadRequestException('User not found');
     }
-    return user.roles.map((role) => role.permissions).flat();
+
+    const permissions = user.roles
+      .map((role) => role.permissions)
+      .flat()
+      .map((permission) => ({ id: permission.id, name: permission.name })); // Map to required format
+
+    return permissions;
   }
 }

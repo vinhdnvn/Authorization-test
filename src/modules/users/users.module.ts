@@ -11,11 +11,13 @@ import { UsersService } from './users.service';
 import { Role } from '../roles/entities/role.entity';
 import { CaslAbilityFactory } from '../casl/casl-ability.factory';
 import { UserRoleDto } from './dto/user-role.dto';
+import { PermissionService } from '../permissions/permission.service';
+import { Permission } from '../permissions/entities/permission.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Role, UserRoleDto]), forwardRef(() => AuthModule)],
+  imports: [TypeOrmModule.forFeature([User, Role, UserRoleDto, Permission]), forwardRef(() => AuthModule)],
   controllers: [UsersController],
-  providers: [UsersService, ConfigService, CaslAbilityFactory],
+  providers: [UsersService, ConfigService, CaslAbilityFactory, PermissionService],
   exports: [UsersService]
 })
 export class UsersModule {}
